@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Suggest a Movie | Social Challenge App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-4">
+                <h2 class="card-title mb-4">
+                    <i class="fas fa-film me-2"></i>Suggest a Movie
+                </h2>
+                <p class="card-subtitle mb-4 text-muted">
+                    Suggesting a movie for <strong>{{ conversation.get_display_name(current_user.id) }}</strong>
+                </p>
+                
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label") }}
+                        {% if form.title.errors %}
+                            {{ form.title(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.title(class="form-control", placeholder="Enter the movie title") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.description.label(class="form-label") }}
+                        {% if form.description.errors %}
+                            {{ form.description(class="form-control is-invalid", rows=4) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.description(class="form-control", rows=4, placeholder="What's the movie about? Why should the group watch it?") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('show_conversation', id=conversation.id) }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4 border-0 shadow">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-lightbulb me-2 text-warning"></i>Movie Suggestion Tips
+                </h5>
+                <ul class="mb-0">
+                    <li>Include the full movie title, including year if there are multiple versions</li>
+                    <li>Add a brief description to help others understand why they might like it</li>
+                    <li>If you've already watched it, mention what you enjoyed about it</li>
+                    <li>Consider the preferences of the other people in the chat</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

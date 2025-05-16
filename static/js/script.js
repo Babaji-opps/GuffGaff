@@ -65,6 +65,89 @@ function initTextareaAutoResize() {
     });
 }
 
+// Filter conversations by type
+function initConversationFilters() {
+    const filterLinks = document.querySelectorAll('[data-filter]');
+    const conversationItems = document.querySelectorAll('.conversation-item');
+    
+    if (filterLinks.length === 0 || conversationItems.length === 0) {
+        return; // Exit if elements don't exist
+    }
+    
+    filterLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update active state
+            filterLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            
+            // Apply filter
+            let visibleCount = 0;
+            conversationItems.forEach(item => {
+                if (filter === 'all' || item.getAttribute('data-type') === filter) {
+                    item.classList.remove('d-none');
+                    visibleCount++;
+                } else {
+                    item.classList.add('d-none');
+                }
+            });
+            
+            // Show/hide no results message
+            const noResults = document.getElementById('no-results');
+            if (noResults) {
+                if (visibleCount === 0 && conversationItems.length > 0) {
+                    noResults.classList.remove('d-none');
+                } else {
+                    noResults.classList.add('d-none');
+                }
+            }
+        });
+    });
+}
+
+// Search conversations
+function initConversationSearch() {
+    const searchInput = document.getElementById('conversation-search');
+    const conversationItems = document.querySelectorAll('.conversation-item');
+    
+    if (!searchInput || conversationItems.length === 0) {
+        return; // Exit if elements don't exist
+    }
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+        
+        conversationItems.forEach(item => {
+            const nameElement = item.querySelector('.conversation-name');
+            const previewElement = item.querySelector('.conversation-preview');
+            
+            const name = nameElement ? nameElement.textContent.toLowerCase() : '';
+            const preview = previewElement ? previewElement.textContent.toLowerCase() : '';
+            
+            if (name.includes(searchTerm) || preview.includes(searchTerm) || searchTerm === '') {
+                item.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                item.classList.add('d-none');
+            }
+        });
+        
+        // Show/hide no results message
+        const noResults = document.getElementById('no-results');
+        if (noResults) {
+            if (visibleCount === 0 && conversationItems.length > 0) {
+                noResults.classList.remove('d-none');
+            } else {
+                noResults.classList.add('d-none');
+            }
+        }
+    });
+}
+
 // Document ready function
 document.addEventListener('DOMContentLoaded', function() {
     // Scroll chat to bottom when page loads
@@ -75,6 +158,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize textarea auto-resize
     initTextareaAutoResize();
+    
+    // Initialize conversation filters and search
+    initConversationFilters();
+    initConversationSearch();
     
     // Automatically submit message form when Enter is pressed (without Shift)
     const messageForm = document.getElementById('message-form');

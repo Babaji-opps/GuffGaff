@@ -141,3 +141,48 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+    // Function to handle direct message user selection
+    function selectDirectUser(userId) {
+        // Clear any previous selections in the members multi-select
+        const membersSelect = document.getElementById('members');
+        if (membersSelect) {
+            for (let i = 0; i < membersSelect.options.length; i++) {
+                membersSelect.options[i].selected = false;
+            }
+        }
+        
+        // Find and select the corresponding user in the hidden members field
+        if (userId) {
+            const option = membersSelect.querySelector(`option[value="${userId}"]`);
+            if (option) {
+                option.selected = true;
+            }
+        }
+    }
+    
+    // Add tab change listener to clear selections when changing tabs
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        const directSelect = document.getElementById('direct-select');
+        const membersSelect = document.getElementById('members');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function() {
+                // Clear selections when changing tabs
+                if (directSelect) {
+                    directSelect.selectedIndex = -1;
+                }
+                
+                if (membersSelect) {
+                    for (let i = 0; i < membersSelect.options.length; i++) {
+                        membersSelect.options[i].selected = false;
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

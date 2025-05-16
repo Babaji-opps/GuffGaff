@@ -78,6 +78,21 @@ def new_conversation():
         # Determine conversation type based on number of members
         conv_type = ConversationType.GROUP if len(selected_members) > 1 else ConversationType.DIRECT
         
+        # For direct messages, check if a conversation already exists between these two users
+        if conv_type == ConversationType.DIRECT and len(selected_members) == 1:
+            other_user = selected_members[0]
+            
+            # Find existing direct conversations between these two users
+            existing_conversation = Conversation.query.filter(
+                Conversation.type == ConversationType.DIRECT,
+                Conversation.members.contains(current_user),
+                Conversation.members.contains(other_user)
+            ).first()
+            
+            if existing_conversation:
+                flash('Continuing existing conversation', 'info')
+                return redirect(url_for('show_conversation', id=existing_conversation.id))
+        
         # Create new conversation
         conversation = Conversation(
             title=form.title.data if form.title.data else None,
@@ -89,7 +104,28 @@ def new_conversation():
         for member in selected_members:
             conversation.members.append(member)
         
+        # For group chats without a title, generate one based on member names
+        if conv_type == ConversationType.GROUP and not conversation.title:
+            member_names = [member.username for member in selected_members[:3]]
+            if len(selected_members) > 3:
+                conversation.title = f"{', '.join(member_names)} and {len(selected_members) - 3} others"
+            else:
+                conversation.title = f"{', '.join(member_names)} group"
+        
         db.session.add(conversation)
+        db.session.commit()
+        
+        # Create a welcome message for new conversations
+        welcome_msg = "Conversation started! 👋"
+        if conv_type == ConversationType.GROUP:
+            welcome_msg = f"Group chat created by {current_user.username}! 👋"
+        
+        system_message = Message(
+            content=welcome_msg,
+            sender=current_user,
+            conversation=conversation
+        )
+        db.session.add(system_message)
         db.session.commit()
         
         flash('Conversation created!', 'success')
@@ -106,23 +142,28 @@ def show_conversation(id):
     if current_user not in conversation.members:
         abort(403)
     
+    # Mark user as having seen this conversation (for read receipts in future)
+    conversation.updated_at = datetime.utcnow()
+    
     # Handle new messages
     message_form = MessageForm()
     if message_form.validate_on_submit():
-        message = Message(
-            content=message_form.content.data,
-            sender=current_user,
-            conversation=conversation
-        )
-        db.session.add(message)
-        
-        # Update conversation timestamp
-        conversation.updated_at = datetime.utcnow()
-        
-        db.session.commit()
+        # Don't save empty messages
+        message_content = message_form.content.data
+        if message_content and message_content.strip():
+            message = Message(
+                content=message_content.strip(),
+                sender=current_user,
+                conversation=conversation
+            )
+            db.session.add(message)
+            
+            # Update conversation timestamp
+            conversation.updated_at = datetime.utcnow()
+            
+            db.session.commit()
         
         # Clear form and redirect to same page (to avoid form resubmission)
-        message_form.content.data = ''
         return redirect(url_for('show_conversation', id=id))
     
     # Get movie suggestions for this conversation
@@ -132,11 +173,16 @@ def show_conversation(id):
     voted_movie_ids = [vote.movie_suggestion_id for vote in 
                       Vote.query.filter_by(user_id=current_user.id).all()]
     
+    # Get other conversations for the sidebar
+    other_conversations = current_user.conversations.filter(Conversation.id != id).order_by(
+        desc(Conversation.updated_at)).limit(5).all()
+    
     return render_template('conversations/show.html', 
                           conversation=conversation,
                           message_form=message_form,
                           movie_suggestions=movie_suggestions,
-                          voted_movie_ids=voted_movie_ids)
+                          voted_movie_ids=voted_movie_ids,
+                          other_conversations=other_conversations)
 
 # Daily challenge routes
 @app.route('/daily')

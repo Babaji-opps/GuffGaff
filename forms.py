@@ -47,7 +47,7 @@ class NewConversationForm(FlaskForm):
     submit = SubmitField('Create Chat')
 
 class MessageForm(FlaskForm):
-    content = TextAreaField('Message', validators=[DataRequired()])
+    content = TextAreaField('Message', validators=[DataRequired(message="Message cannot be empty")])
     submit = SubmitField('Send')
 
 class DailyChallengeCompletionForm(FlaskForm):

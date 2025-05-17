@@ -162,12 +162,12 @@
     <div class="col-md-3 d-none d-md-block">
         <!-- Movie suggestions -->
         <div class="card border-0 shadow mb-4">
-            <div class="card-header bg-dark py-3">
+            <div class="card-header movie-card-header py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
+                    <h5 class="mb-0 movie-card-title">
                         <i class="fas fa-film me-2"></i>Movies
                     </h5>
-                    <a href="{{ url_for('suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-outline-primary">
+                    <a href="{{ url_for('suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus"></i>
                     </a>
                 </div>
@@ -176,32 +176,40 @@
                 {% if movie_suggestions %}
                     <div class="list-group list-group-flush">
                         {% for movie in movie_suggestions %}
-                            <div class="list-group-item bg-dark border-0 p-3">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <h6 class="mb-1">{{ movie.title }}</h6>
+                            <div class="movie-card m-2 p-3">
+                                <div class="mb-2">
+                                    <h6 class="mb-0 fw-bold movie-card-title">{{ movie.title }}</h6>
+                                    <small class="text-muted d-block mt-1">
+                                        Suggested by {{ movie.suggested_by.username }}
+                                    </small>
+                                </div>
+                                {% if movie.description %}
+                                    <p class="mb-2 small">{{ movie.description | truncate(80) }}</p>
+                                {% endif %}
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div class="vote-count">
+                                        <i class="fas fa-thumbs-up"></i> {{ movie.vote_count() }}
+                                    </div>
                                     <form method="POST" action="{{ url_for('vote_movie', conv_id=conversation.id, movie_id=movie.id) }}" class="d-inline">
-                                        <button type="submit" class="btn btn-sm vote-btn {% if movie.id in voted_movie_ids %}btn-warning active{% else %}btn-outline-warning{% endif %}" 
-                                                data-bs-toggle="tooltip" title="Vote">
-                                            <i class="fas fa-thumbs-up"></i>
-                                            <span class="vote-count">{{ movie.vote_count() }}</span>
+                                        <button type="submit" class="btn btn-sm vote-btn {% if movie.id in voted_movie_ids %}active{% else %}{% endif %}" 
+                                                data-bs-toggle="tooltip" title="Vote for this movie">
+                                            {% if movie.id in voted_movie_ids %}
+                                                <i class="fas fa-thumbs-up me-1"></i>Voted
+                                            {% else %}
+                                                <i class="far fa-thumbs-up me-1"></i>Vote
+                                            {% endif %}
                                         </button>
                                     </form>
                                 </div>
-                                {% if movie.description %}
-                                    <p class="mb-1 small">{{ movie.description | truncate(60) }}</p>
-                                {% endif %}
-                                <small class="text-muted">
-                                    By {{ movie.suggested_by.username }}
-                                </small>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="text-center p-4">
                         <i class="fas fa-film fa-2x mb-3 text-muted"></i>
-                        <p>No movie suggestions yet.</p>
-                        <a href="{{ url_for('suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-outline-primary mt-2">
-                            Suggest a Movie
+                        <p class="text-muted">No movie suggestions yet</p>
+                        <a href="{{ url_for('suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-2"></i>Suggest Movie
                         </a>
                     </div>
                 {% endif %}
@@ -210,20 +218,27 @@
         
         <!-- Members list -->
         <div class="card border-0 shadow" id="members-card">
-            <div class="card-header bg-dark py-3">
-                <h5 class="mb-0">
+            <div class="card-header movie-card-header py-3">
+                <h5 class="mb-0 movie-card-title">
                     <i class="fas fa-users me-2"></i>Members
                 </h5>
             </div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush">
                     {% for member in conversation.members %}
-                        <li class="list-group-item bg-dark d-flex align-items-center {% if member.id == current_user.id %}text-primary{% endif %}">
-                            <i class="fas fa-user-circle me-3"></i>
-                            {{ member.username }}
-                            {% if member.id == current_user.id %}
-                                <span class="badge rounded-pill text-bg-primary ms-2">You</span>
-                            {% endif %}
+                        <li class="list-group-item bg-dark border-0 py-3 px-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px; background: linear-gradient(45deg, rgba(0, 255, 117, 0.4), rgba(55, 0, 255, 0.4));">
+                                    <span class="fw-bold">{{ member.username[0] | upper }}</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ member.username }}</h6>
+                                    {% if member.id == current_user.id %}
+                                        <small class="text-primary">You</small>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>

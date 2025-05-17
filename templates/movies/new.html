@@ -1,24 +1,28 @@
 {% extends 'base.html' %}
 
-{% block title %}Suggest a Movie | Social Challenge App{% endblock %}
+{% block title %}Suggest a Movie | GuffGaff{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card border-0 shadow-lg">
-            <div class="card-body p-4">
-                <h2 class="card-title mb-4">
+        <div class="card shadow-lg mb-4">
+            <div class="card-header d-flex align-items-center">
+                <h2 class="mb-0 fs-4">
                     <i class="fas fa-film me-2"></i>Suggest a Movie
                 </h2>
-                <p class="card-subtitle mb-4 text-muted">
-                    Suggesting a movie for <strong>{{ conversation.get_display_name(current_user.id) }}</strong>
-                </p>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Suggesting a movie will add it to the conversation so your friends can vote on it!
+                </div>
                 
-                <form method="POST" novalidate>
+                <form method="POST" class="mt-4">
                     {{ form.hidden_tag() }}
                     
-                    <div class="mb-3">
-                        {{ form.title.label(class="form-label") }}
+                    <div class="mb-4">
+                        <label for="title" class="form-label">{{ form.title.label }}</label>
                         {% if form.title.errors %}
                             {{ form.title(class="form-control is-invalid") }}
                             <div class="invalid-feedback">
@@ -27,12 +31,12 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ form.title(class="form-control", placeholder="Enter the movie title") }}
+                            {{ form.title(class="form-control", placeholder="Enter movie title") }}
                         {% endif %}
                     </div>
                     
                     <div class="mb-4">
-                        {{ form.description.label(class="form-label") }}
+                        <label for="description" class="form-label">{{ form.description.label }}</label>
                         {% if form.description.errors %}
                             {{ form.description(class="form-control is-invalid", rows=4) }}
                             <div class="invalid-feedback">
@@ -41,29 +45,20 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ form.description(class="form-control", rows=4, placeholder="What's the movie about? Why should the group watch it?") }}
+                            {{ form.description(class="form-control", rows=4, placeholder="Why do you want to watch this movie? Include any details like genre, actors, or where to watch it.") }}
                         {% endif %}
+                        <div class="form-text">Optional - but helpful for convincing others to vote!</div>
                     </div>
                     
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{{ url_for('show_conversation', id=conversation.id) }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
-                        {{ form.submit(class="btn btn-primary") }}
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('show_conversation', id=conversation.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Conversation
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>{{ form.submit.label }}
+                        </button>
                     </div>
                 </form>
-            </div>
-        </div>
-        
-        <div class="card mt-4 border-0 shadow">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="fas fa-lightbulb me-2 text-warning"></i>Movie Suggestion Tips
-                </h5>
-                <ul class="mb-0">
-                    <li>Include the full movie title, including year if there are multiple versions</li>
-                    <li>Add a brief description to help others understand why they might like it</li>
-                    <li>If you've already watched it, mention what you enjoyed about it</li>
-                    <li>Consider the preferences of the other people in the chat</li>
-                </ul>
             </div>
         </div>
     </div>

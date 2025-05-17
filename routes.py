@@ -62,7 +62,8 @@ def logout():
 @login_required
 def conversations():
     user_conversations = current_user.conversations.order_by(desc(Conversation.updated_at)).all()
-    return render_template('conversations/index.html', conversations=user_conversations)
+    # Use the new WhatsApp/Telegram style messenger template
+    return render_template('conversations/messenger.html', conversations=user_conversations, selected_conversation=None, message_form=None)
 
 @app.route('/conversations/new', methods=['GET', 'POST'])
 @login_required
@@ -177,12 +178,16 @@ def show_conversation(id):
     other_conversations = current_user.conversations.filter(Conversation.id != id).order_by(
         desc(Conversation.updated_at)).limit(5).all()
     
-    return render_template('conversations/show.html', 
-                          conversation=conversation,
+    # Get all conversations for the sidebar
+    all_conversations = current_user.conversations.order_by(desc(Conversation.updated_at)).all()
+    
+    # Use the new WhatsApp/Telegram style messenger template
+    return render_template('conversations/messenger.html', 
+                          conversations=all_conversations,
+                          selected_conversation=conversation,
                           message_form=message_form,
                           movie_suggestions=movie_suggestions,
-                          voted_movie_ids=voted_movie_ids,
-                          other_conversations=other_conversations)
+                          voted_movie_ids=voted_movie_ids)
 
 # Daily challenge routes
 @app.route('/daily')

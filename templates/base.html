@@ -8,14 +8,23 @@
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home') }}">
+            <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
                 <i class="fas fa-users me-2"></i>Social Challenge
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -25,33 +34,33 @@
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('conversations') }}">
+                            <a class="nav-link mx-1" href="{{ url_for('conversations') }}">
                                 <i class="fas fa-comments me-1"></i>Chats
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('daily_challenge') }}">
+                            <a class="nav-link mx-1" href="{{ url_for('daily_challenge') }}">
                                 <i class="fas fa-trophy me-1"></i>Daily Challenge
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('profile') }}">
+                            <a class="nav-link mx-1" href="{{ url_for('profile') }}">
                                 <i class="fas fa-user me-1"></i>Profile
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('logout') }}">
+                            <a class="nav-link mx-1" href="{{ url_for('logout') }}">
                                 <i class="fas fa-sign-out-alt me-1"></i>Logout
                             </a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">
+                            <a class="nav-link mx-1" href="{{ url_for('login') }}">
                                 <i class="fas fa-sign-in-alt me-1"></i>Login
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('signup') }}">
+                            <a class="nav-link mx-1" href="{{ url_for('signup') }}">
                                 <i class="fas fa-user-plus me-1"></i>Sign Up
                             </a>
                         </li>
@@ -62,16 +71,27 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="container mb-5">
+    <div class="container mb-5 pt-5 mt-4">
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
+                <div class="flash-messages mt-4">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow" role="alert">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle me-2"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle me-2"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
         
@@ -80,9 +100,20 @@
     </div>
 
     <!-- Footer -->
-    <footer class="py-4 bg-dark text-white mt-5">
+    <footer class="py-4 text-white">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2023 Social Challenge App</p>
+            <div class="mb-3">
+                <a href="#" class="text-decoration-none mx-2 text-white">
+                    <i class="fab fa-twitter fa-lg"></i>
+                </a>
+                <a href="#" class="text-decoration-none mx-2 text-white">
+                    <i class="fab fa-instagram fa-lg"></i>
+                </a>
+                <a href="#" class="text-decoration-none mx-2 text-white">
+                    <i class="fab fa-github fa-lg"></i>
+                </a>
+            </div>
+            <p class="mb-0">&copy; 2025 Social Challenge App</p>
         </div>
     </footer>
 

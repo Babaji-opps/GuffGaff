@@ -1,4 +1,4 @@
-/* From Uiverse.io by yashasvi9199 */ 
+
 .form {
   display: flex;
   flex-direction: column;

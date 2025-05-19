@@ -81,7 +81,7 @@ GuffGaff is a feature-rich social platform that combines messaging, daily challe
 
 ### Installation
 ```sh
-git clone https://github.com/YogiSunil/GuffGaff.git
+git clone https://github.com/Babaji-opps/GuffGaff.git
 cd GuffGaff
 python -m venv venv
 venv\Scripts\activate  # On Windows

@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}New Conversation | Social Challenge App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left column with info and tips -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-lg mb-4">
+            <div class="card-header bg-dark py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Chat Types
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6 class="mb-2"><i class="fas fa-user text-info me-2"></i>Direct Messages</h6>
+                    <p class="small text-muted">One-on-one conversations between you and another user. Select just one user for a direct chat.</p>
+                </div>
+                
+                <div>
+                    <h6 class="mb-2"><i class="fas fa-users text-success me-2"></i>Group Chats</h6>
+                    <p class="small text-muted">Conversations with multiple participants. Select two or more users to create a group chat.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-lg">
+            <div class="card-header bg-dark py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Tips
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        You can add a custom name to group chats
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Suggest movies and plan movie nights in your chats
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Share your daily challenge completions
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right column with form -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-lg">
+            <div class="card-header bg-dark py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>New Conversation
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <ul class="nav nav-tabs mb-4" id="chatTypeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="direct-tab" data-bs-toggle="tab" data-bs-target="#direct" type="button" role="tab" aria-controls="direct" aria-selected="true">
+                            <i class="fas fa-user me-2"></i>Direct Message
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="group-tab" data-bs-toggle="tab" data-bs-target="#group" type="button" role="tab" aria-controls="group" aria-selected="false">
+                            <i class="fas fa-users me-2"></i>Group Chat
+                        </button>
+                    </li>
+                </ul>
+                
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="tab-content" id="chatTypeTabsContent">
+                        <!-- Direct Message Tab -->
+                        <div class="tab-pane fade show active" id="direct" role="tabpanel" aria-labelledby="direct-tab">
+                            <div class="mb-4">
+                                <label for="direct-select" class="form-label">Select a user to chat with</label>
+                                <select id="direct-select" class="form-select" size="8" onchange="selectDirectUser(this.value)">
+                                    {% for choice in form.members.choices %}
+                                        <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select a single user for direct messaging</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Group Chat Tab -->
+                        <div class="tab-pane fade" id="group" role="tabpanel" aria-labelledby="group-tab">
+                            <div class="mb-3">
+                                {{ form.members.label(class="form-label") }}
+                                {% if form.members.errors %}
+                                    <select id="members" name="members" multiple class="form-select is-invalid" size="8">
+                                        {% for choice in form.members.choices %}
+                                            <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        {% for error in form.members.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <select id="members" name="members" multiple class="form-select" size="8">
+                                        {% for choice in form.members.choices %}
+                                            <option value="{{ choice[0] }}">{{ choice[1] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% endif %}
+                                <div class="form-text">Hold Ctrl (or Cmd on Mac) to select multiple users for a group chat</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.title.label(class="form-label") }}
+                                {% if form.title.errors %}
+                                    {{ form.title(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.title.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.title(class="form-control", placeholder="Name for your group chat (optional)") }}
+                                {% endif %}
+                                <div class="form-text">Leave blank to automatically use member names</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.conversations') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Function to handle direct message user selection
+    function selectDirectUser(userId) {
+        // Clear any previous selections in the members multi-select
+        const membersSelect = document.getElementById('members');
+        if (membersSelect) {
+            for (let i = 0; i < membersSelect.options.length; i++) {
+                membersSelect.options[i].selected = false;
+            }
+        }
+        
+        // Find and select the corresponding user in the hidden members field
+        if (userId) {
+            const option = membersSelect.querySelector(`option[value="${userId}"]`);
+            if (option) {
+                option.selected = true;
+            }
+        }
+    }
+    
+    // Add tab change listener to clear selections when changing tabs
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        const directSelect = document.getElementById('direct-select');
+        const membersSelect = document.getElementById('members');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function() {
+                // Clear selections when changing tabs
+                if (directSelect) {
+                    directSelect.selectedIndex = -1;
+                }
+                
+                if (membersSelect) {
+                    for (let i = 0; i < membersSelect.options.length; i++) {
+                        membersSelect.options[i].selected = false;
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

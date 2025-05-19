@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Suggest a Movie | GuffGaff{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg mb-4">
+            <div class="card-header d-flex align-items-center">
+                <h2 class="mb-0 fs-4">
+                    <i class="fas fa-film me-2"></i>Suggest a Movie
+                </h2>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Suggesting a movie will add it to the conversation so your friends can vote on it!
+                </div>
+                
+                <form method="POST" class="mt-4">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <label for="title" class="form-label">{{ form.title.label }}</label>
+                        {% if form.title.errors %}
+                            {{ form.title(class="form-control is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.title(class="form-control", placeholder="Enter movie title") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="description" class="form-label">{{ form.description.label }}</label>
+                        {% if form.description.errors %}
+                            {{ form.description(class="form-control is-invalid", rows=4) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.description(class="form-control", rows=4, placeholder="Why do you want to watch this movie? Include any details like genre, actors, or where to watch it.") }}
+                        {% endif %}
+                        <div class="form-text">Optional - but helpful for convincing others to vote!</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('main.show_conversation', id=conversation.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Conversation
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>{{ form.submit.label }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

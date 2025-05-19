@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages | GuffGaff{% endblock %}
+
+{% block content %}
+<div class="messenger-container">
+    <div class="messenger-sidebar">
+        <div class="messenger-sidebar-header">
+            <h5 class="messenger-sidebar-title">
+                <i class="fas fa-comments me-2"></i>Messages
+            </h5>
+            <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-primary rounded-circle">
+                <i class="fas fa-plus"></i>
+            </a>
+        </div>
+        <div class="messenger-search">
+            <input type="text" class="messenger-search-input" placeholder="Search messages..." id="conversation-search">
+        </div>
+        <div class="messenger-conversations">
+            {% if conversations %}
+                {% for conv in conversations %}
+                    <a href="{{ url_for('main.show_conversation', id=conv.id) }}" class="conversation-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}">
+                        <div class="conversation-avatar">
+                            {% if conv.type.value == 'direct' %}
+                                {% for member in conv.members %}
+                                    {% if member.id != current_user.id %}
+                                        {{ member.username[0] | upper }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {{ conv.title[0] | upper if conv.title else 'G' }}
+                            {% endif %}
+                        </div>
+                        <div class="conversation-info">
+                            <div class="conversation-title">
+                                {{ conv.title if conv.title else 'Direct Message' }}
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="text-muted p-3">No conversations yet.</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="messenger-main">
+        {% if selected_conversation %}
+            <!-- Conversation details/messages go here -->
+        {% else %}
+            <div class="text-center text-muted mt-5">Select a conversation to start messaging.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

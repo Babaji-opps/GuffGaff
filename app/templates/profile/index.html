@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Profile | Social Challenge App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- User profile card -->
+    <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body text-center p-5">
+                <div class="mb-4">
+                    <i class="fas fa-user-circle fa-6x text-primary"></i>
+                </div>
+                <h2 class="card-title">{{ current_user.username }}</h2>
+                <p class="text-muted">{{ current_user.email }}</p>
+                
+                <hr>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="display-5 fw-bold text-warning">{{ streak }}</div>
+                        <p>Current Streak</p>
+                    </div>
+                    <div class="col-6">
+                        <div class="display-5 fw-bold text-info">{{ current_user.conversations.count() }}</div>
+                        <p>Conversations</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('main.daily_challenge') }}" class="btn btn-primary">
+                        <i class="fas fa-trophy me-2"></i>View Today's Challenge
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Challenge history -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-lg mb-4">
+            <div class="card-header bg-dark py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Challenge History
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_completions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Challenge</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for completion in recent_completions %}
+                                    <tr>
+                                        <td>{{ completion.date.strftime('%b %d, %Y') }}</td>
+                                        <td>{{ completion.challenge.title }}</td>
+                                        <td>
+                                            {% if completion.completion_note %}
+                                                {{ completion.completion_note }}
+                                            {% else %}
+                                                <span class="text-muted">No notes</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center p-5">
+                        <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
+                        <h4>No challenge history yet</h4>
+                        <p>Complete today's challenge to start your streak!</p>
+                        <a href="{{ url_for('main.daily_challenge') }}" class="btn btn-primary mt-2">
+                            View Today's Challenge
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Movie suggestions -->
+        <div class="card border-0 shadow-lg">
+            <div class="card-header bg-dark py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-film me-2"></i>Your Movie Suggestions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if suggested_movies %}
+                    <div class="row">
+                        {% for movie in suggested_movies %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 bg-dark border-0 shadow-sm movie-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ movie.title }}</h5>
+                                        {% if movie.description %}
+                                            <p class="card-text small">{{ movie.description|truncate(100) }}</p>
+                                        {% endif %}
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <small class="text-muted">
+                                                {{ movie.created_at.strftime('%b %d, %Y') }}
+                                            </small>
+                                            <span class="badge rounded-pill text-bg-warning">
+                                                <i class="fas fa-thumbs-up me-1"></i>
+                                                {{ movie.vote_count() }} votes
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center p-4">
+                        <i class="fas fa-film fa-3x mb-3 text-muted"></i>
+                        <h4>No movie suggestions yet</h4>
+                        <p>Suggest movies in your conversations to see them here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

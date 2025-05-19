@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Social Challenge App{% endblock %}
+
+{% block content %}
+<div class="row align-items-center g-5 py-5">
+    <div class="col-lg-6">
+        <h1 class="display-5 fw-bold lh-1 mb-3">Connect, Challenge, Chat</h1>
+        <p class="lead">
+            Join our community of active individuals who love to connect, 
+            complete fun daily challenges, and plan activities together!
+        </p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <a href="{{ url_for('main.login') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                <i class="fas fa-sign-in-alt me-2"></i>Log In
+            </a>
+            <a href="{{ url_for('main.signup') }}" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="fas fa-user-plus me-2"></i>Sign Up
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-lg challenge-card bg-dark">
+            <div class="card-body p-5">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="feature-icon bg-primary bg-gradient p-2 rounded-circle me-3">
+                        <i class="fas fa-trophy text-white fa-2x"></i>
+                    </div>
+                    <h2 class="fw-bold">Today's Challenge</h2>
+                </div>
+                <p class="lead">Complete daily challenges to maintain your streak!</p>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div>
+                        <small class="text-muted">Join now to see today's challenge</small>
+                    </div>
+                    <a href="{{ url_for('main.signup') }}" class="btn btn-outline-warning">Get Started</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card mb-3 bg-dark border-0 shadow">
+                    <div class="card-body p-4">
+                        <i class="fas fa-comments text-info mb-3 fa-2x"></i>
+                        <h5 class="card-title">Private & Group Chats</h5>
+                        <p class="card-text">Connect with friends in private or start group conversations.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3 bg-dark border-0 shadow">
+                    <div class="card-body p-4">
+                        <i class="fas fa-film text-warning mb-3 fa-2x"></i>
+                        <h5 class="card-title">Movie Night Planning</h5>
+                        <p class="card-text">Suggest movies and vote on what to watch next with friends.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="row g-4 py-5">
+    <div class="col-md-4">
+        <div class="feature-icon bg-primary bg-gradient p-2 rounded-circle mb-3">
+            <i class="fas fa-trophy text-white fa-2x p-2"></i>
+        </div>
+        <h3>Daily Challenges</h3>
+        <p>Complete fun daily challenges like "Take a photo of something red" or "Do 10 pushups" to maintain your streak.</p>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-icon bg-success bg-gradient p-2 rounded-circle mb-3">
+            <i class="fas fa-comments text-white fa-2x p-2"></i>
+        </div>
+        <h3>Seamless Messaging</h3>
+        <p>Chat with friends one-on-one or create group conversations to stay connected with everyone.</p>
+    </div>
+    <div class="col-md-4">
+        <div class="feature-icon bg-warning bg-gradient p-2 rounded-circle mb-3">
+            <i class="fas fa-film text-dark fa-2x p-2"></i>
+        </div>
+        <h3>Movie Suggestions</h3>
+        <p>Suggest movies to watch with friends and vote on your favorites to plan the perfect movie night.</p>
+    </div>
+</div>
+{% endblock %}

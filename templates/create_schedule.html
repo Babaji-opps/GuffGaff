@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <form action="{{ url_for('create_schedule') }}" method="post">
+        <label for="title">Task Name:</label>
+        <input type="text" id="title" name="title" required>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <label for="start_time">Start Time:</label>
+        <input type="time" id="start_time" name="start_time" required>
+
+        <label for="end_time">End Time:</label>
+        <input type="time" id="end_time" name="end_time" required>
+
+        <label for="description">Description:</label>
+        <textarea id="description" name="description"></textarea>
+
+        <label for="icon">Choose Icon:</label>
+        <select id="icon" name="icon">
+            <option value="fas fa-book">Book</option>
+            <option value="fas fa-laptop">Laptop</option>
+            <option value="fas fa-pen">Pen</option>
+            <option value="fas fa-calendar-check">Calendar Check</option>
+            <option value="fas fa-clock">Clock</option>
+            <option value="fas fa-bell">Bell</option>
+            <option value="fas fa-check-circle">Check Circle</option>
+            <option value="fas fa-sticky-note">Sticky Note</option>
+            <option value="fas fa-paperclip">Paperclip</option>
+            <option value="fas fa-user">User</option>
+            <option value="fas fa-users">Users</option>
+        </select>
+
+        <label for="reminder">Set Reminder:</label>
+        <input type="checkbox" id="reminder" name="reminder">
+
+        <button type="submit">Create Schedule</button>
+    </form>
+</div>
+{% endblock %}

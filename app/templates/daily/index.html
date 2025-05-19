@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily Challenge | Social Challenge App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Main Challenge Card -->
+        <div class="card border-0 shadow-lg challenge-card mb-4 {% if completed %}bg-success bg-opacity-25{% else %}bg-dark{% endif %}">
+            <div class="card-body p-5">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h2 class="card-title">{{ challenge.title }}</h2>
+                        <p class="text-muted">{{ challenge.date.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    <div class="bg-warning p-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <span class="fw-bold" style="font-size: 2rem;">{{ streak }}</span>
+                    </div>
+                </div>
+                
+                {% if challenge.description %}
+                    <p class="card-text lead mb-4">{{ challenge.description }}</p>
+                {% endif %}
+                
+                {% if completed %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Challenge completed!</strong> Great job maintaining your streak.
+                    </div>
+                {% else %}
+                    <form method="POST" action="{{ url_for('main.complete_challenge') }}">
+                        {{ form.hidden_tag() }}
+                        {{ form.challenge_id }}
+                        
+                        <div class="mb-3">
+                            {{ form.completion_note.label(class="form-label") }}
+                            {{ form.completion_note(class="form-control", rows=3) }}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Streak Information -->
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header bg-dark py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-fire me-2"></i>Your Streak
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="streak-counter">{{ streak }}</div>
+                        <p>Current Streak</p>
+                    </div>
+                    <div class="col border-start">
+                        <h4>Streak Tips</h4>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check-circle text-success me-2"></i>Complete challenges daily</li>
+                            <li><i class="fas fa-clock text-warning me-2"></i>Don't skip a day</li>
+                            <li><i class="fas fa-users text-info me-2"></i>Share with friends for motivation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Recent Completions Card -->
+        <div class="card border-0 shadow">
+            <div class="card-header bg-dark py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>Recent Completions
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_completions %}
+                    <ul class="list-group list-group-flush">
+                        {% for completion in recent_completions %}
+                            <li class="list-group-item bg-dark">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-bold">{{ completion.user.username }}</div>
+                                        {% if completion.completion_note %}
+                                            <small class="text-muted">{{ completion.completion_note }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted time-ago" data-timestamp="{{ completion.created_at }}">
+                                        {{ completion.created_at.strftime('%H:%M') }}
+                                    </small>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center p-4">
+                        <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+                        <p>No recent completions by other users.</p>
+                        <p>Be the first to complete today's challenge!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

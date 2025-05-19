@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error | Social Challenge App{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <i class="fas fa-exclamation-triangle fa-5x mb-4 text-warning"></i>
+    <h1 class="display-4">500</h1>
+    <h2 class="mb-4">Server Error</h2>
+    <p class="lead">Something went wrong on our servers. We're working on fixing the issue.</p>
+    <a href="{{ url_for('main.home') }}" class="btn btn-primary mt-3">
+        <i class="fas fa-home me-2"></i>Return to Home
+    </a>
+</div>
+{% endblock %}

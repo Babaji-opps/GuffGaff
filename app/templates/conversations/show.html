@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ conversation.get_display_name(current_user.id) }} | GuffGaff{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left sidebar with other conversations -->
+    <div class="col-md-3 d-none d-md-block">
+        <div class="card border-0 shadow-lg mb-4">
+            <div class="card-header bg-dark py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>Chats
+                    </h5>
+                    <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if other_conversations %}
+                        {% for conv in other_conversations %}
+                            <a href="{{ url_for('main.show_conversation', id=conv.id) }}" class="list-group-item list-group-item-action bg-dark border-0 py-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        {% if conv.type.value == 'direct' %}
+                                            <i class="fas fa-user me-2 text-info"></i>
+                                        {% else %}
+                                            <i class="fas fa-users me-2 text-info"></i>
+                                        {% endif %}
+                                        <span class="fw-semibold">{{ conv.get_display_name(current_user.id) }}</span>
+                                    </div>
+                                    {% if conv.messages.count() > 0 %}
+                                        <small class="text-muted time-ago" data-timestamp="{{ conv.updated_at }}">
+                                            {{ conv.updated_at.strftime('%H:%M') }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                {% if conv.messages.count() > 0 %}
+                                    {% set latest = conv.messages.order_by(conv.messages.c.created_at.desc()).first() %}
+                                    <div class="small text-muted mt-1 text-truncate">
+                                        {% if latest.sender_id != current_user.id %}
+                                            <span class="fw-semibold">{{ latest.sender.username }}:</span>
+                                        {% endif %}
+                                        {{ latest.content }}
+                                    </div>
+                                {% else %}
+                                    <div class="small text-muted mt-1">No messages yet</div>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                        
+                        <div class="list-group-item bg-dark border-0 text-center py-3">
+                            <a href="{{ url_for('main.conversations') }}" class="text-muted small">View all conversations</a>
+                        </div>
+                    {% else %}
+                        <div class="list-group-item bg-dark border-0 text-center py-3">
+                            <div class="text-muted">No other conversations yet</div>
+                            <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                Start a new chat
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main chat column -->
+    <div class="col-md-6">
+        <!-- Mobile view: back button and new chat -->
+        <div class="d-md-none d-flex justify-content-between align-items-center mb-3">
+            <a href="{{ url_for('main.conversations') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>All Chats
+            </a>
+            <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-2"></i>New Chat
+            </a>
+        </div>
+        
+        <div class="card border-0 shadow-lg mb-4">
+            <div class="card-header bg-dark py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if conversation.type.value == 'direct' %}
+                            <i class="fas fa-user me-2 text-info"></i>
+                        {% else %}
+                            <i class="fas fa-users me-2 text-info"></i>
+                        {% endif %}
+                        <span class="fw-bold">{{ conversation.get_display_name(current_user.id) }}</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('main.suggest_movie', id=conversation.id) }}">
+                                        <i class="fas fa-film me-2"></i>Suggest Movie
+                                    </a>
+                                </li>
+                                {% if conversation.type.value == 'group' %}
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="showMembers(); return false;">
+                                            <i class="fas fa-users me-2"></i>Show Members
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat messages - WhatsApp/Telegram style -->
+            <div class="card-body p-0">
+                <div class="chat-container">
+                    {% if conversation.messages.count() > 0 %}
+                        {% for message in conversation.messages.all() %}
+                            <div class="message-wrapper {% if message.sender_id == current_user.id %}outgoing{% else %}incoming{% endif %}">
+                                {% if message.sender_id != current_user.id %}
+                                    <div class="message-avatar">
+                                        {{ message.sender.username[0] | upper }}
+                                    </div>
+                                {% endif %}
+                                <div class="message-content">
+                                    {% if message.sender_id != current_user.id and conversation.type.value == 'group' %}
+                                        <div class="message-sender small fw-semibold" style="color: #00ff75; margin-bottom: 2px; margin-left: 7px;">
+                                            {{ message.sender.username }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="message-bubble {% if message.sender_id == current_user.id %}outgoing{% else %}incoming{% endif %}">
+                                        {{ message.content }}
+                                    </div>
+                                    <div class="message-meta">
+                                        <span class="message-time">{{ message.created_at.strftime('%I:%M %p') }}</span>
+                                        {% if message.sender_id == current_user.id %}
+                                            <span class="message-status">
+                                                <i class="fas fa-check-double"></i>
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted my-5">
+                            <i class="fas fa-comment-dots fa-3x mb-3"></i>
+                            <p>No messages yet. Start the conversation!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Message input - WhatsApp/Telegram style -->
+            <div class="card-footer message-input-container p-2">
+                <form method="POST" id="message-form">
+                    {{ message_form.hidden_tag() }}
+                    <div class="d-flex align-items-end">
+                        <div class="message-input-wrapper flex-grow-1 position-relative">
+                            {{ message_form.content(class="form-control shadow-none", placeholder="Message", rows=1, autofocus=true, id="content") }}
+                            <div class="message-emoji-btn">
+                                <i class="far fa-smile"></i>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-send ms-2">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right sidebar with movie suggestions and members -->
+    <div class="col-md-3 d-none d-md-block">
+        <!-- Movie suggestions -->
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header movie-card-header py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 movie-card-title">
+                        <i class="fas fa-film me-2"></i>Movies
+                    </h5>
+                    <a href="{{ url_for('main.suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if movie_suggestions %}
+                    <div class="list-group list-group-flush">
+                        {% for movie in movie_suggestions %}
+                            <div class="movie-card m-2 p-3">
+                                <div class="mb-2">
+                                    <h6 class="mb-0 fw-bold movie-card-title">{{ movie.title }}</h6>
+                                    <small class="text-muted d-block mt-1">
+                                        Suggested by {{ movie.suggested_by.username }}
+                                    </small>
+                                </div>
+                                {% if movie.description %}
+                                    <p class="mb-2 small">{{ movie.description | truncate(80) }}</p>
+                                {% endif %}
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <div class="vote-count">
+                                        <i class="fas fa-thumbs-up"></i> {{ movie.vote_count() }}
+                                    </div>
+                                    <form method="POST" action="{{ url_for('main.vote_movie', conv_id=conversation.id, movie_id=movie.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm vote-btn {% if movie.id in voted_movie_ids %}active{% else %}{% endif %}" 
+                                                data-bs-toggle="tooltip" title="Vote for this movie">
+                                            {% if movie.id in voted_movie_ids %}
+                                                <i class="fas fa-thumbs-up me-1"></i>Voted
+                                            {% else %}
+                                                <i class="far fa-thumbs-up me-1"></i>Vote
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center p-4">
+                        <i class="fas fa-film fa-2x mb-3 text-muted"></i>
+                        <p class="text-muted">No movie suggestions yet</p>
+                        <a href="{{ url_for('main.suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-2"></i>Suggest Movie
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Members list -->
+        <div class="card border-0 shadow" id="members-card">
+            <div class="card-header movie-card-header py-3">
+                <h5 class="mb-0 movie-card-title">
+                    <i class="fas fa-users me-2"></i>Members
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for member in conversation.members %}
+                        <li class="list-group-item bg-dark border-0 py-3 px-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px; background: linear-gradient(45deg, rgba(0, 255, 117, 0.4), rgba(55, 0, 255, 0.4));">
+                                    <span class="fw-bold">{{ member.username[0] | upper }}</span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{ member.username }}</h6>
+                                    {% if member.id == current_user.id %}
+                                        <small class="text-primary">You</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Members Modal -->
+<div class="modal fade" id="membersModal" tabindex="-1" aria-labelledby="membersModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="membersModalLabel">Group Members</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group list-group-flush">
+                    {% for member in conversation.members %}
+                        <li class="list-group-item bg-dark d-flex align-items-center {% if member.id == current_user.id %}text-primary{% endif %}">
+                            <i class="fas fa-user-circle me-3"></i>
+                            {{ member.username }}
+                            {% if member.id == current_user.id %}
+                                <span class="badge rounded-pill text-bg-primary ms-2">You</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Execute when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Automatically scroll to the bottom of the chat when the page loads
+        scrollChatToBottom();
+        
+        // Initialize textarea auto-resize for the message input
+        const textarea = document.getElementById('content');
+        if (textarea) {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+    });
+    
+    // Function to show the members modal on mobile
+    function showMembers() {
+        const membersModal = new bootstrap.Modal(document.getElementById('membersModal'));
+        membersModal.show();
+    }
+</script>
+{% endblock %}

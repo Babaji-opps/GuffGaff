@@ -9,45 +9,119 @@
             <h5 class="messenger-sidebar-title">
                 <i class="fas fa-comments me-2"></i>Messages
             </h5>
-            <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-primary rounded-circle">
-                <i class="fas fa-plus"></i>
+            <a href="{{ url_for('main.conversations') }}" class="btn btn-sm btn-primary rounded-circle" title="New Group Chat">
+                <i class="fas fa-users"></i>
             </a>
         </div>
         <div class="messenger-search">
-            <input type="text" class="messenger-search-input" placeholder="Search messages..." id="conversation-search">
+            <input type="text" class="messenger-search-input" placeholder="Search users..." id="user-search">
         </div>
         <div class="messenger-conversations">
-            {% if conversations %}
-                {% for conv in conversations %}
-                    <a href="{{ url_for('main.show_conversation', id=conv.id) }}" class="conversation-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}">
-                        <div class="conversation-avatar">
-                            {% if conv.type.value == 'direct' %}
-                                {% for member in conv.members %}
-                                    {% if member.id != current_user.id %}
-                                        {{ member.username[0] | upper }}
-                                    {% endif %}
-                                {% endfor %}
-                            {% else %}
-                                {{ conv.title[0] | upper if conv.title else 'G' }}
-                            {% endif %}
+            {% if group_conversations %}
+                <div class="sidebar-section-label text-muted small px-3 pt-2 pb-1">Groups</div>
+                {% for group in group_conversations %}
+                    <a href="{{ url_for('main.group_conversation', group_id=group.id) }}" class="conversation-item {% if selected_conversation and group.id == selected_conversation.id %}active{% endif %}">
+                        <div class="conversation-avatar bg-success">
+                            <i class="fas fa-users"></i>
                         </div>
                         <div class="conversation-info">
                             <div class="conversation-title">
-                                {{ conv.title if conv.title else 'Direct Message' }}
+                                {{ group.title or group.get_display_name(current_user.id) }}
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            {% endif %}
+            {% if users %}
+                <div class="sidebar-section-label text-muted small px-3 pt-3 pb-1">Direct Messages</div>
+                {% for user in users %}
+                    <a href="{{ url_for('main.direct_message', user_id=user.id) }}" class="conversation-item {% if selected_user and user.id == selected_user.id %}active{% endif %}">
+                        <div class="conversation-avatar">
+                            {{ user.username[0] | upper }}
+                        </div>
+                        <div class="conversation-info">
+                            <div class="conversation-title">
+                                {{ user.username }}
                             </div>
                         </div>
                     </a>
                 {% endfor %}
             {% else %}
-                <div class="text-muted p-3">No conversations yet.</div>
+                <div class="text-muted p-3">No users found.</div>
             {% endif %}
         </div>
     </div>
     <div class="messenger-main">
         {% if selected_conversation %}
-            <!-- Conversation details/messages go here -->
+            <div class="conversation-header d-flex align-items-center justify-content-between px-3 py-2 mb-2">
+                <div class="fw-bold fs-5">
+                    {% if selected_conversation.type.value == 'direct' %}
+                        {% for member in selected_conversation.members %}
+                            {% if member.id != current_user.id %}
+                                {{ member.username }}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {{ selected_conversation.title or 'Group Chat' }}
+                    {% endif %}
+                </div>
+                {% if selected_conversation.type.value == 'group' %}
+                    <div>
+                        <a href="{{ url_for('main.add_group_members', group_id=selected_conversation.id) }}" class="btn btn-sm btn-success me-2">Add Members</a>
+                        <a href="{{ url_for('main.group_conversation', group_id=selected_conversation.id) }}" class="btn btn-sm btn-outline-primary">View Group</a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="chat-messages p-3" style="height: 65vh; overflow-y: auto;">
+                {% for message in selected_conversation.messages.order_by('created_at') %}
+                    <div class="d-flex mb-2 {% if message.sender_id == current_user.id %}justify-content-end{% else %}justify-content-start{% endif %}">
+                        <div class="chat-bubble {% if message.sender_id == current_user.id %}outgoing{% else %}incoming{% endif %}">
+                            <div class="small fw-bold mb-1 chat-bubble-username">
+                                {% if message.sender_id == current_user.id %}You{% else %}{{ message.sender.username }}{% endif %}
+                            </div>
+                            <div class="message-text">{{ message.content }}</div>
+                            <div class="text-end text-muted small mt-1 chat-bubble-time">
+                                {{ message.created_at.strftime('%b %d, %I:%M %p') }}
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted my-5">No messages yet. Say hi!</div>
+                {% endfor %}
+            </div>
+            <div class="message-input-container p-3">
+                <form method="POST" id="message-form">
+                    {{ message_form.hidden_tag() }}
+                    <div class="d-flex align-items-end">
+                        <div class="message-input-wrapper flex-grow-1 position-relative">
+                            {{ message_form.content(class="form-control shadow-none", placeholder="Message", rows=1, autofocus=true, id="content") }}
+                        </div>
+                        <button type="submit" class="btn btn-success ms-2 send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        {% elif selected_user %}
+            <div class="conversation-header d-flex align-items-center px-3 py-2 mb-2">
+                <div class="fw-bold fs-5">{{ selected_user.username }}</div>
+            </div>
+            <div class="text-center text-muted mt-5">No messages yet. Say hi to {{ selected_user.username }}!</div>
+            <div class="message-input-container p-3">
+                <form method="POST" id="message-form">
+                    {{ message_form.hidden_tag() }}
+                    <div class="d-flex align-items-end">
+                        <div class="message-input-wrapper flex-grow-1 position-relative">
+                            {{ message_form.content(class="form-control shadow-none", placeholder="Message", rows=1, autofocus=true, id="content") }}
+                        </div>
+                        <button type="submit" class="btn btn-success ms-2 send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
         {% else %}
-            <div class="text-center text-muted mt-5">Select a conversation to start messaging.</div>
+            <div class="text-center text-muted mt-5">Select a user to start messaging.</div>
         {% endif %}
     </div>
 </div>

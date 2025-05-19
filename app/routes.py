@@ -63,133 +63,80 @@ def logout():
 @bp.route('/conversations')
 @login_required
 def conversations():
-    user_conversations = current_user.conversations.order_by(desc(Conversation.updated_at)).all()
-    # Use the new WhatsApp/Telegram style messenger template
-    return render_template('conversations/messenger.html', conversations=user_conversations, selected_conversation=None, message_form=None)
+    # Show all users except the current user
+    users = User.query.filter(User.id != current_user.id).order_by(User.username).all()
+    # Show all group conversations the user is a member of
+    group_conversations = current_user.conversations.filter_by(type=ConversationType.GROUP).order_by(Conversation.updated_at.desc()).all()
+    return render_template('conversations/messenger.html', users=users, group_conversations=group_conversations, selected_user=None, selected_conversation=None, message_form=None)
 
-@bp.route('/conversations/new', methods=['GET', 'POST'])
+@bp.route('/conversations/user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
-def new_conversation():
-    form = NewConversationForm()
-    # Get all users except current user for the form choices
-    form.members.choices = [(user.id, user.username) 
-                           for user in User.query.filter(User.id != current_user.id).all()]
-    
-    if form.validate_on_submit():
-        selected_members = User.query.filter(User.id.in_(form.members.data)).all()
-        
-        # Determine conversation type based on number of members
-        conv_type = ConversationType.GROUP if len(selected_members) > 1 else ConversationType.DIRECT
-        
-        # For direct messages, check if a conversation already exists between these two users
-        if conv_type == ConversationType.DIRECT and len(selected_members) == 1:
-            other_user = selected_members[0]
-            
-            # Find existing direct conversations between these two users
-            existing_conversation = Conversation.query.filter(
-                Conversation.type == ConversationType.DIRECT,
-                Conversation.members.contains(current_user),
-                Conversation.members.contains(other_user)
-            ).first()
-            
-            if existing_conversation:
-                flash('Continuing existing conversation', 'info')
-                return redirect(url_for('show_conversation', id=existing_conversation.id))
-        
-        # Create new conversation
-        conversation = Conversation(
-            title=form.title.data if form.title.data else None,
-            type=conv_type
-        )
-        
-        # Add current user and selected members
+def direct_message(user_id):
+    other_user = User.query.get_or_404(user_id)
+    if other_user.id == current_user.id:
+        abort(404)
+    # Find or create direct conversation
+    from app.models import Conversation, ConversationType
+    conversation = Conversation.query \
+        .filter(Conversation.type == ConversationType.DIRECT) \
+        .filter(Conversation.members.contains(current_user)) \
+        .filter(Conversation.members.contains(other_user)) \
+        .first()
+    if not conversation:
+        conversation = Conversation(type=ConversationType.DIRECT)
         conversation.members.append(current_user)
-        for member in selected_members:
-            conversation.members.append(member)
-        
-        # For group chats without a title, generate one based on member names
-        if conv_type == ConversationType.GROUP and not conversation.title:
-            member_names = [member.username for member in selected_members[:3]]
-            if len(selected_members) > 3:
-                conversation.title = f"{', '.join(member_names)} and {len(selected_members) - 3} others"
-            else:
-                conversation.title = f"{', '.join(member_names)} group"
-        
+        conversation.members.append(other_user)
         db.session.add(conversation)
         db.session.commit()
-        
-        # Create a welcome message for new conversations
-        welcome_msg = "Conversation started! 👋"
-        if conv_type == ConversationType.GROUP:
-            welcome_msg = f"Group chat created by {current_user.username}! 👋"
-        
-        system_message = Message(
-            content=welcome_msg,
-            sender=current_user,
-            conversation=conversation
-        )
-        db.session.add(system_message)
-        db.session.commit()
-        
-        flash('Conversation created!', 'success')
-        return redirect(url_for('show_conversation', id=conversation.id))
-    
-    return render_template('conversations/new.html', form=form)
-
-@bp.route('/conversations/<int:id>', methods=['GET', 'POST'])
-@login_required
-def show_conversation(id):
-    conversation = Conversation.query.get_or_404(id)
-    
-    # Check if user is a member of this conversation
-    if current_user not in conversation.members:
-        abort(403)
-    
-    # Mark user as having seen this conversation (for read receipts in future)
-    conversation.updated_at = datetime.utcnow()
-    
-    # Handle new messages
+    # Handle new message
     message_form = MessageForm()
     if message_form.validate_on_submit():
-        # Don't save empty messages
-        message_content = message_form.content.data
-        if message_content and message_content.strip():
-            message = Message(
-                content=message_content.strip(),
-                sender=current_user,
-                conversation=conversation
-            )
+        content = message_form.content.data.strip()
+        if content:
+            message = Message(content=content, sender=current_user, conversation=conversation)
             db.session.add(message)
-            
-            # Update conversation timestamp
-            conversation.updated_at = datetime.utcnow()
-            
             db.session.commit()
-        
-        # Clear form and redirect to same page (to avoid form resubmission)
-        return redirect(url_for('show_conversation', id=id))
-    
-    # Get movie suggestions for this conversation
-    movie_suggestions = conversation.movie_suggestions.all()
-    
-    # Check which movies the current user has voted for
-    voted_movie_ids = [vote.movie_suggestion_id for vote in 
-                      Vote.query.filter_by(user_id=current_user.id).all()]
-    
-    # Get other conversations for the sidebar
-    other_conversations = current_user.conversations.filter(Conversation.id != id).order_by(
-        desc(Conversation.updated_at)).limit(5).all()
-    
-    # Get all conversations for the sidebar
-    all_conversations = current_user.conversations.order_by(desc(Conversation.updated_at)).all()
-    
-    # Use the new WhatsApp/Telegram style messenger template
-    return render_template('conversations/messenger.html', 
-                          conversations=all_conversations,
-                          selected_conversation=conversation,
-                          message_form=message_form,
-                          movie_suggestions=movie_suggestions,
-                          voted_movie_ids=voted_movie_ids)
+            return redirect(url_for('main.direct_message', user_id=other_user.id))
+    return render_template('conversations/messenger.html', users=User.query.filter(User.id != current_user.id).order_by(User.username).all(), selected_user=other_user, selected_conversation=conversation, message_form=message_form)
+
+@bp.route('/conversations/group/<int:group_id>', methods=['GET', 'POST'])
+@login_required
+def group_conversation(group_id):
+    conversation = Conversation.query.get_or_404(group_id)
+    if conversation.type != ConversationType.GROUP or current_user not in conversation.members:
+        abort(404)
+    message_form = MessageForm()
+    if message_form.validate_on_submit():
+        content = message_form.content.data.strip()
+        if content:
+            message = Message(content=content, sender=current_user, conversation=conversation)
+            db.session.add(message)
+            db.session.commit()
+            return redirect(url_for('main.group_conversation', group_id=group_id))
+    users = User.query.filter(User.id != current_user.id).order_by(User.username).all()
+    group_conversations = current_user.conversations.filter_by(type=ConversationType.GROUP).order_by(Conversation.updated_at.desc()).all()
+    return render_template('conversations/messenger.html', users=users, group_conversations=group_conversations, selected_user=None, selected_conversation=conversation, message_form=message_form)
+
+@bp.route('/conversations/group/<int:group_id>/add_members', methods=['GET', 'POST'])
+@login_required
+def add_group_members(group_id):
+    conversation = Conversation.query.get_or_404(group_id)
+    if conversation.type != ConversationType.GROUP or current_user not in conversation.members:
+        abort(404)
+    from app.forms import AddMembersForm
+    form = AddMembersForm()
+    # Only show users not already in the group
+    existing_ids = [user.id for user in conversation.members]
+    form.members.choices = [(user.id, user.username) for user in User.query.filter(User.id.notin_(existing_ids)).order_by(User.username).all()]
+    if form.validate_on_submit():
+        new_members = User.query.filter(User.id.in_(form.members.data)).all()
+        for user in new_members:
+            if user not in conversation.members:
+                conversation.members.append(user)
+        db.session.commit()
+        flash('Members added to the group!', 'success')
+        return redirect(url_for('main.group_conversation', group_id=group_id))
+    return render_template('conversations/add_members.html', form=form, conversation=conversation)
 
 # Daily challenge routes
 @bp.route('/daily')
@@ -256,7 +203,7 @@ def complete_challenge():
             db.session.commit()
             flash('Challenge completed! Your streak continues!', 'success')
     
-    return redirect(url_for('daily_challenge'))
+    return redirect(url_for('main.daily_challenge'))
 
 # Movie suggestion routes
 @bp.route('/conversations/<int:id>/movies/suggest', methods=['GET', 'POST'])
@@ -281,7 +228,7 @@ def suggest_movie(id):
         db.session.commit()
         
         flash('Movie suggestion added!', 'success')
-        return redirect(url_for('show_conversation', id=id))
+        return redirect(url_for('main.show_conversation', id=id))
     
     return render_template('movies/new.html', form=form, conversation=conversation)
 
@@ -312,7 +259,7 @@ def vote_movie(conv_id, movie_id):
         flash('Vote added!', 'success')
     
     db.session.commit()
-    return redirect(url_for('show_conversation', id=conv_id))
+    return redirect(url_for('main.show_conversation', id=conv_id))
 
 # User profile
 @bp.route('/profile')
@@ -340,6 +287,31 @@ def profile():
                           streak=streak,
                           recent_completions=recent_completions,
                           suggested_movies=suggested_movies)
+
+@bp.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    from app.forms import ProfileUpdateForm
+    form = ProfileUpdateForm(obj=current_user)
+    if form.validate_on_submit():
+        # Update username if changed (no password required)
+        if form.username.data != current_user.username:
+            current_user.username = form.username.data
+            flash('Username updated successfully.', 'success')
+        # Update email if changed (require current password)
+        if form.email.data != current_user.email:
+            if not current_user.check_password(form.current_password.data):
+                flash('Current password is incorrect. Email not updated.', 'danger')
+                return render_template('profile/edit.html', form=form)
+            current_user.email = form.email.data
+            flash('Email updated successfully.', 'success')
+        # Update password if provided
+        if form.new_password.data:
+            current_user.set_password(form.new_password.data)
+            flash('Password updated successfully.', 'success')
+        db.session.commit()
+        return redirect(url_for('main.profile'))
+    return render_template('profile/edit.html', form=form)
 
 # Error handlers
 @bp.errorhandler(404)

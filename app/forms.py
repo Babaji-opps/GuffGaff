@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, SubmitField, SelectMultipleField, HiddenField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 from app.models import User
+from flask_login import current_user
 
 class SignupForm(FlaskForm):
     username = StringField('Username', validators=[
@@ -62,3 +63,33 @@ class MovieSuggestionForm(FlaskForm):
     ])
     description = TextAreaField('Description (optional)', validators=[Length(max=1000)])
     submit = SubmitField('Suggest Movie')
+
+class ProfileUpdateForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=64, message='Username must be between 3 and 64 characters')])
+    email = StringField('New Email', validators=[DataRequired(), Email(), Length(max=120)])
+    current_password = PasswordField('Current Password')  # Only required if changing email
+    new_password = PasswordField('New Password', validators=[Length(min=8, message='Password must be at least 8 characters long')])
+    confirm_new_password = PasswordField('Confirm New Password', validators=[EqualTo('new_password', message='Passwords must match')])
+    submit = SubmitField('Update Profile')
+
+    def validate_username(self, username):
+        if username.data != current_user.username:
+            user = User.query.filter_by(username=username.data).first()
+            if user:
+                raise ValidationError('Username already taken. Please choose a different one.')
+
+    def validate_email(self, email):
+        if email.data != current_user.email:
+            user = User.query.filter_by(email=email.data).first()
+            if user:
+                raise ValidationError('Email already in use. Please choose a different one.')
+
+    def validate_current_password(self, current_password):
+        # Only require current password if email is being changed
+        if self.email.data != current_user.email:
+            if not current_password.data:
+                raise ValidationError('Current password is required to change your email.')
+
+class AddMembersForm(FlaskForm):
+    members = SelectMultipleField('Add Members', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Add to Group')

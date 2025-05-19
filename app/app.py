@@ -1,22 +1,15 @@
 import os
 import logging
 from datetime import datetime
-
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager
+from app import db, Base
 
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-class Base(DeclarativeBase):
-    pass
-
-
-db = SQLAlchemy(model_class=Base)
 # create the app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
@@ -42,7 +35,7 @@ db.init_app(app)
 
 with app.app_context():
     # Make sure to import the models here or their tables won't be created
-    import models  # noqa: F401
+    from app import models  # noqa: F401
 
     db.create_all()
     
@@ -50,12 +43,10 @@ with app.app_context():
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(int(user_id))
-    
     # Import routes after models are defined
-    import routes  # noqa: F401
-    
+    from app import routes  # noqa: F401
     # Create a daily challenge for today if none exists
-    from models import DailyChallenge
+    from app.models import DailyChallenge
     today = datetime.now().date()
     if not DailyChallenge.query.filter_by(date=today).first():
         default_challenges = [

@@ -138,7 +138,7 @@ class DailyCompletion(db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'challenge_id', name='_user_challenge_uc'),)
     
     def __repr__(self):
-        return f'<DailyCompletion {self.id} by {self.user_id}>'
+        return f'<DailyCompletion {self.id} by {self.user_id}'
 
 class MovieSuggestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)

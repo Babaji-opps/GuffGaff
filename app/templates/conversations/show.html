@@ -12,7 +12,7 @@
                     <h5 class="mb-0">
                         <i class="fas fa-comments me-2"></i>Chats
                     </h5>
-                    <a href="{{ url_for('new_conversation') }}" class="btn btn-sm btn-outline-primary">
+                    <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-plus"></i>
                     </a>
                 </div>
@@ -21,7 +21,7 @@
                 <div class="list-group list-group-flush">
                     {% if other_conversations %}
                         {% for conv in other_conversations %}
-                            <a href="{{ url_for('show_conversation', id=conv.id) }}" class="list-group-item list-group-item-action bg-dark border-0 py-3">
+                            <a href="{{ url_for('main.show_conversation', id=conv.id) }}" class="list-group-item list-group-item-action bg-dark border-0 py-3">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         {% if conv.type.value == 'direct' %}
@@ -52,12 +52,12 @@
                         {% endfor %}
                         
                         <div class="list-group-item bg-dark border-0 text-center py-3">
-                            <a href="{{ url_for('conversations') }}" class="text-muted small">View all conversations</a>
+                            <a href="{{ url_for('main.conversations') }}" class="text-muted small">View all conversations</a>
                         </div>
                     {% else %}
                         <div class="list-group-item bg-dark border-0 text-center py-3">
                             <div class="text-muted">No other conversations yet</div>
-                            <a href="{{ url_for('new_conversation') }}" class="btn btn-sm btn-outline-primary mt-2">
+                            <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-outline-primary mt-2">
                                 Start a new chat
                             </a>
                         </div>
@@ -71,10 +71,10 @@
     <div class="col-md-6">
         <!-- Mobile view: back button and new chat -->
         <div class="d-md-none d-flex justify-content-between align-items-center mb-3">
-            <a href="{{ url_for('conversations') }}" class="btn btn-sm btn-outline-secondary">
+            <a href="{{ url_for('main.conversations') }}" class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>All Chats
             </a>
-            <a href="{{ url_for('new_conversation') }}" class="btn btn-sm btn-primary">
+            <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-primary">
                 <i class="fas fa-plus me-2"></i>New Chat
             </a>
         </div>
@@ -97,7 +97,7 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('suggest_movie', id=conversation.id) }}">
+                                    <a class="dropdown-item" href="{{ url_for('main.suggest_movie', id=conversation.id) }}">
                                         <i class="fas fa-film me-2"></i>Suggest Movie
                                     </a>
                                 </li>
@@ -183,7 +183,7 @@
                     <h5 class="mb-0 movie-card-title">
                         <i class="fas fa-film me-2"></i>Movies
                     </h5>
-                    <a href="{{ url_for('suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('main.suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus"></i>
                     </a>
                 </div>
@@ -206,7 +206,7 @@
                                     <div class="vote-count">
                                         <i class="fas fa-thumbs-up"></i> {{ movie.vote_count() }}
                                     </div>
-                                    <form method="POST" action="{{ url_for('vote_movie', conv_id=conversation.id, movie_id=movie.id) }}" class="d-inline">
+                                    <form method="POST" action="{{ url_for('main.vote_movie', conv_id=conversation.id, movie_id=movie.id) }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm vote-btn {% if movie.id in voted_movie_ids %}active{% else %}{% endif %}" 
                                                 data-bs-toggle="tooltip" title="Vote for this movie">
                                             {% if movie.id in voted_movie_ids %}
@@ -224,7 +224,7 @@
                     <div class="text-center p-4">
                         <i class="fas fa-film fa-2x mb-3 text-muted"></i>
                         <p class="text-muted">No movie suggestions yet</p>
-                        <a href="{{ url_for('suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
+                        <a href="{{ url_for('main.suggest_movie', id=conversation.id) }}" class="btn btn-sm btn-primary">
                             <i class="fas fa-plus me-2"></i>Suggest Movie
                         </a>
                     </div>

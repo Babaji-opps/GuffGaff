@@ -4,25 +4,22 @@
 
 {% block content %}
 <div class="messenger-container">
-    <!-- Left sidebar with conversations -->
     <div class="messenger-sidebar">
         <div class="messenger-sidebar-header">
             <h5 class="messenger-sidebar-title">
                 <i class="fas fa-comments me-2"></i>Messages
             </h5>
-            <a href="{{ url_for('new_conversation') }}" class="btn btn-sm btn-primary rounded-circle">
+            <a href="{{ url_for('main.new_conversation') }}" class="btn btn-sm btn-primary rounded-circle">
                 <i class="fas fa-plus"></i>
             </a>
         </div>
-        
         <div class="messenger-search">
             <input type="text" class="messenger-search-input" placeholder="Search messages..." id="conversation-search">
         </div>
-        
         <div class="messenger-conversations">
             {% if conversations %}
                 {% for conv in conversations %}
-                    <a href="{{ url_for('show_conversation', id=conv.id) }}" class="conversation-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}" data-type="{{ conv.type.value }}">
+                    <a href="{{ url_for('main.show_conversation', id=conv.id) }}" class="conversation-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}">
                         <div class="conversation-avatar">
                             {% if conv.type.value == 'direct' %}
                                 {% for member in conv.members %}
@@ -31,213 +28,27 @@
                                     {% endif %}
                                 {% endfor %}
                             {% else %}
-                                <i class="fas fa-users"></i>
+                                {{ conv.title[0] | upper if conv.title else 'G' }}
                             {% endif %}
                         </div>
                         <div class="conversation-info">
-                            <div class="conversation-name">
-                                {{ conv.get_display_name(current_user.id) }}
+                            <div class="conversation-title">
+                                {{ conv.title if conv.title else 'Direct Message' }}
                             </div>
-                            {% if conv.messages.count() > 0 %}
-                                {% set latest_message = conv.messages.order_by(conv.messages.c.created_at.desc()).first() %}
-                                <div class="conversation-preview">
-                                    {% if latest_message.sender_id == current_user.id %}
-                                        <span>You: </span>
-                                    {% elif conv.type.value == 'group' %}
-                                        <span>{{ latest_message.sender.username }}: </span>
-                                    {% endif %}
-                                    {{ latest_message.content | truncate(40) }}
-                                </div>
-                            {% else %}
-                                <div class="conversation-preview">
-                                    <span>No messages yet</span>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="conversation-meta">
-                            {% if conv.messages.count() > 0 %}
-                                <div class="conversation-time">
-                                    {{ conv.updated_at.strftime('%H:%M') }}
-                                </div>
-                                <!-- Add unread messages badge (for demo purposes) -->
-                                {% if loop.index % 3 == 0 %}
-                                <div class="conversation-unread">
-                                    {{ loop.index % 5 + 1 }}
-                                </div>
-                                {% endif %}
-                            {% endif %}
                         </div>
                     </a>
                 {% endfor %}
             {% else %}
-                <div class="text-center p-4">
-                    <p class="text-muted">No conversations yet</p>
-                </div>
+                <div class="text-muted p-3">No conversations yet.</div>
             {% endif %}
         </div>
     </div>
-    
-    <!-- Right content area - either selected conversation or welcome screen -->
-    <div class="messenger-content">
+    <div class="messenger-main">
         {% if selected_conversation %}
-            <!-- Chat header -->
-            <div class="messenger-chat-header">
-                <div class="conversation-avatar">
-                    {% if selected_conversation.type.value == 'direct' %}
-                        {% for member in selected_conversation.members %}
-                            {% if member.id != current_user.id %}
-                                {{ member.username[0] | upper }}
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <i class="fas fa-users"></i>
-                    {% endif %}
-                </div>
-                <div class="messenger-chat-info">
-                    <h6 class="messenger-chat-name">{{ selected_conversation.get_display_name(current_user.id) }}</h6>
-                    <p class="messenger-chat-status">
-                        {% if selected_conversation.type.value == 'direct' %}
-                            Active now
-                        {% else %}
-                            {{ selected_conversation.members|length }} members
-                        {% endif %}
-                    </p>
-                </div>
-                <div class="messenger-chat-options">
-                    <button type="button" title="Movie Suggestions">
-                        <i class="fas fa-film"></i>
-                    </button>
-                    <button type="button" title="More Options">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Chat messages -->
-            <div class="chat-container">
-                {% if selected_conversation.messages.count() > 0 %}
-                    {% for message in selected_conversation.messages.all() %}
-                        <div class="message-wrapper {% if message.sender_id == current_user.id %}outgoing{% else %}incoming{% endif %}">
-                            {% if message.sender_id != current_user.id %}
-                                <div class="message-avatar">
-                                    {{ message.sender.username[0] | upper }}
-                                </div>
-                            {% endif %}
-                            <div class="message-content">
-                                {% if message.sender_id != current_user.id and selected_conversation.type.value == 'group' %}
-                                    <div class="message-sender small fw-semibold" style="color: #00ff75; margin-bottom: 2px; margin-left: 7px;">
-                                        {{ message.sender.username }}
-                                    </div>
-                                {% endif %}
-                                <div class="message-bubble {% if message.sender_id == current_user.id %}outgoing{% else %}incoming{% endif %}">
-                                    {{ message.content }}
-                                </div>
-                                <div class="message-meta">
-                                    <span class="message-time">{{ message.created_at.strftime('%I:%M %p') }}</span>
-                                    {% if message.sender_id == current_user.id %}
-                                        <span class="message-status">
-                                            <i class="fas fa-check-double"></i>
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center text-muted my-5">
-                        <i class="fas fa-comment-dots fa-3x mb-3"></i>
-                        <p>No messages yet. Start the conversation!</p>
-                    </div>
-                {% endif %}
-            </div>
-            
-            <!-- Message input -->
-            <div class="messenger-input">
-                <div class="messenger-input-actions">
-                    <button type="button" title="Emoji">
-                        <i class="far fa-smile"></i>
-                    </button>
-                    <button type="button" title="Attach">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
-                </div>
-                
-                <form method="POST" id="message-form" class="d-flex flex-grow-1 align-items-center gap-2">
-                    {{ message_form.hidden_tag() }}
-                    {{ message_form.content(class="messenger-input-field", placeholder="Message", id="content") }}
-                    <button type="submit" class="messenger-input-send">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </form>
-            </div>
-            
+            <!-- Conversation details/messages go here -->
         {% else %}
-            <!-- Welcome screen when no conversation is selected -->
-            <div class="messenger-welcome">
-                <div class="messenger-welcome-icon">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <h4>Welcome to GuffGaff</h4>
-                <p>Select a conversation to start messaging or create a new one!</p>
-                <a href="{{ url_for('new_conversation') }}" class="btn btn-primary mt-3">
-                    <i class="fas fa-plus me-2"></i>New Conversation
-                </a>
-            </div>
+            <div class="text-center text-muted mt-5">Select a conversation to start messaging.</div>
         {% endif %}
     </div>
 </div>
-
-<!-- Floating button for mobile -->
-<a href="{{ url_for('new_conversation') }}" class="new-chat-btn d-md-none">
-    <i class="fas fa-plus"></i>
-</a>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-scroll chat to bottom
-        const chatContainer = document.querySelector('.chat-container');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-        
-        // Search functionality
-        const searchInput = document.getElementById('conversation-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const query = this.value.toLowerCase();
-                const conversations = document.querySelectorAll('.conversation-item');
-                
-                conversations.forEach(conv => {
-                    const name = conv.querySelector('.conversation-name').textContent.toLowerCase();
-                    const preview = conv.querySelector('.conversation-preview').textContent.toLowerCase();
-                    
-                    if (name.includes(query) || preview.includes(query)) {
-                        conv.style.display = '';
-                    } else {
-                        conv.style.display = 'none';
-                    }
-                });
-            });
-        }
-        
-        // Message input auto-resize
-        const messageInput = document.getElementById('content');
-        if (messageInput) {
-            messageInput.addEventListener('input', function() {
-                this.style.height = '42px';
-                this.style.height = (this.scrollHeight > 120 ? 120 : this.scrollHeight) + 'px';
-            });
-            
-            // Handle enter key for sending
-            messageInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    document.getElementById('message-form').submit();
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}

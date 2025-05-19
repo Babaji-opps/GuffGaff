@@ -17,7 +17,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for
 
 # configure the database, relative to the app instance folder
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL") or (
-    f"sqlite:///{os.path.join(os.path.dirname(__file__), 'instance', 'GuffGaff.db')}"
+    f"sqlite:///../instance/GuffGaff.db"
 )
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
@@ -43,8 +43,6 @@ with app.app_context():
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(int(user_id))
-    # Import routes after models are defined
-    from app import routes  # noqa: F401
     # Create a daily challenge for today if none exists
     from app.models import DailyChallenge
     today = datetime.now().date()
@@ -70,6 +68,10 @@ with app.app_context():
         db.session.add(new_challenge)
         db.session.commit()
         logging.debug(f"Created new daily challenge: {new_challenge.title}")
+
+# Import and register the Blueprint after app, db, and login_manager are set up
+from app.routes import bp as main_bp
+app.register_blueprint(main_bp)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

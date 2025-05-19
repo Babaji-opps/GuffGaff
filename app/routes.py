@@ -1,25 +1,27 @@
 import logging
 from datetime import datetime
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask import render_template, redirect, url_for, flash, request, abort, Blueprint
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import desc, and_
 
-from app import app, db
-from models import User, Conversation, Message, DailyChallenge, DailyCompletion, MovieSuggestion, Vote, ConversationType
-from forms import SignupForm, LoginForm, NewConversationForm, MessageForm, DailyChallengeCompletionForm, MovieSuggestionForm
+from app import db
+from app.models import User, Conversation, Message, DailyChallenge, DailyCompletion, MovieSuggestion, Vote, ConversationType
+from app.forms import SignupForm, LoginForm, NewConversationForm, MessageForm, DailyChallengeCompletionForm, MovieSuggestionForm
+
+bp = Blueprint('main', __name__)
 
 # Home page
-@app.route('/')
+@bp.route('/')
 def home():
     if current_user.is_authenticated:
-        return redirect(url_for('conversations'))
+        return redirect(url_for('main.conversations'))
     return render_template('home.html')
 
 # Auth routes
-@app.route('/signup', methods=['GET', 'POST'])
+@bp.route('/signup', methods=['GET', 'POST'])
 def signup():
     if current_user.is_authenticated:
-        return redirect(url_for('conversations'))
+        return redirect(url_for('main.conversations'))
     
     form = SignupForm()
     if form.validate_on_submit():
@@ -28,14 +30,14 @@ def signup():
         db.session.add(user)
         db.session.commit()
         flash('Account created successfully! Please log in.', 'success')
-        return redirect(url_for('login'))
+        return redirect(url_for('main.login'))
     
     return render_template('auth/signup.html', form=form)
 
-@app.route('/login', methods=['GET', 'POST'])
+@bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('conversations'))
+        return redirect(url_for('main.conversations'))
     
     form = LoginForm()
     if form.validate_on_submit():
@@ -44,28 +46,28 @@ def login():
             login_user(user)
             next_page = request.args.get('next')
             flash('Logged in successfully!', 'success')
-            return redirect(next_page or url_for('conversations'))
+            return redirect(next_page or url_for('main.conversations'))
         else:
             flash('Invalid email or password', 'danger')
     
     return render_template('auth/login.html', form=form)
 
-@app.route('/logout')
+@bp.route('/logout')
 @login_required
 def logout():
     logout_user()
     flash('You have been logged out', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('main.login'))
 
 # Conversation routes
-@app.route('/conversations')
+@bp.route('/conversations')
 @login_required
 def conversations():
     user_conversations = current_user.conversations.order_by(desc(Conversation.updated_at)).all()
     # Use the new WhatsApp/Telegram style messenger template
     return render_template('conversations/messenger.html', conversations=user_conversations, selected_conversation=None, message_form=None)
 
-@app.route('/conversations/new', methods=['GET', 'POST'])
+@bp.route('/conversations/new', methods=['GET', 'POST'])
 @login_required
 def new_conversation():
     form = NewConversationForm()
@@ -134,7 +136,7 @@ def new_conversation():
     
     return render_template('conversations/new.html', form=form)
 
-@app.route('/conversations/<int:id>', methods=['GET', 'POST'])
+@bp.route('/conversations/<int:id>', methods=['GET', 'POST'])
 @login_required
 def show_conversation(id):
     conversation = Conversation.query.get_or_404(id)
@@ -190,7 +192,7 @@ def show_conversation(id):
                           voted_movie_ids=voted_movie_ids)
 
 # Daily challenge routes
-@app.route('/daily')
+@bp.route('/daily')
 @login_required
 def daily_challenge():
     today = datetime.now().date()
@@ -199,7 +201,7 @@ def daily_challenge():
     # If no challenge exists for today (unlikely due to our app.py setup)
     if not challenge:
         flash('No challenge available for today', 'info')
-        return redirect(url_for('conversations'))
+        return redirect(url_for('main.conversations'))
     
     # Check if user already completed this challenge
     completed = DailyCompletion.query.filter_by(
@@ -226,7 +228,7 @@ def daily_challenge():
                           recent_completions=recent_completions,
                           streak=current_user.get_streak())
 
-@app.route('/daily/complete', methods=['POST'])
+@bp.route('/daily/complete', methods=['POST'])
 @login_required
 def complete_challenge():
     form = DailyChallengeCompletionForm()
@@ -257,7 +259,7 @@ def complete_challenge():
     return redirect(url_for('daily_challenge'))
 
 # Movie suggestion routes
-@app.route('/conversations/<int:id>/movies/suggest', methods=['GET', 'POST'])
+@bp.route('/conversations/<int:id>/movies/suggest', methods=['GET', 'POST'])
 @login_required
 def suggest_movie(id):
     conversation = Conversation.query.get_or_404(id)
@@ -283,7 +285,7 @@ def suggest_movie(id):
     
     return render_template('movies/new.html', form=form, conversation=conversation)
 
-@app.route('/conversations/<int:conv_id>/movies/vote/<int:movie_id>', methods=['POST'])
+@bp.route('/conversations/<int:conv_id>/movies/vote/<int:movie_id>', methods=['POST'])
 @login_required
 def vote_movie(conv_id, movie_id):
     conversation = Conversation.query.get_or_404(conv_id)
@@ -313,7 +315,7 @@ def vote_movie(conv_id, movie_id):
     return redirect(url_for('show_conversation', id=conv_id))
 
 # User profile
-@app.route('/profile')
+@bp.route('/profile')
 @login_required
 def profile():
     # Get user's challenge streak
@@ -340,14 +342,14 @@ def profile():
                           suggested_movies=suggested_movies)
 
 # Error handlers
-@app.errorhandler(404)
+@bp.errorhandler(404)
 def page_not_found(e):
     return render_template('errors/404.html'), 404
 
-@app.errorhandler(403)
+@bp.errorhandler(403)
 def forbidden(e):
     return render_template('errors/403.html'), 403
 
-@app.errorhandler(500)
+@bp.errorhandler(500)
 def server_error(e):
     return render_template('errors/500.html'), 500

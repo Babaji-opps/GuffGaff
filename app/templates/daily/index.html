@@ -28,7 +28,7 @@
                         <strong>Challenge completed!</strong> Great job maintaining your streak.
                     </div>
                 {% else %}
-                    <form method="POST" action="{{ url_for('complete_challenge') }}">
+                    <form method="POST" action="{{ url_for('main.complete_challenge') }}">
                         {{ form.hidden_tag() }}
                         {{ form.challenge_id }}
                         
